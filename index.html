@@ -108,6 +108,11 @@ li.rv label{cursor:pointer;display:block}
 li.rv input{margin-right:8px;transform:scale(1.2)}
 .note{font-size:14px;color:var(--muted)}
 input[type=text]{font:inherit;width:100%;max-width:360px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);margin:4px 0 8px}
+.card{display:block;text-align:center;min-height:96px}
+.card .tt{font-weight:700;color:var(--teal);font-size:18px;display:block;padding:20px 4px}
+.card .tn{display:block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--orange);margin-bottom:6px}
+.card .td{display:block;font-size:15px;line-height:1.45}
+.card .mk{justify-content:center}
 </style>
 </head>
 <body>
@@ -198,18 +203,20 @@ function test(c,B){
 }
 function atama(c,B){
   const s=st(c.no);
-  B.innerHTML=`<div class="box">Kartani bosing: atama va ta’rif almashadi. Ta’rifni ko‘rgach, atamani <b>bilasizmi</b> yoki <b>takrorlash kerakmi</b> belgilang.</div><input type="search" id="s" placeholder="Atamani qidirish..."><p class="note" id="tc"></p><div class="fc" id="fc"></div>`;
+  B.innerHTML=`<div class="box">Kartani bosing: ta’rif ochiladi (tepasida atama nomi kichik harflarda ko‘rinadi). Ta’rifni ko‘rgach, atamani <b>bilasizmi</b> yoki <b>takrorlash kerakmi</b> belgilang.</div><input type="search" id="s" placeholder="Atamani qidirish..."><p class="note" id="tc"></p><div class="fc" id="fc"></div>`;
   const cnt=()=>{document.getElementById('tc').textContent=`O‘zlashtirilgan: ${Object.values(s.term).filter(v=>v===1).length} / ${c.glossary.length}`};
+  const cls=i=>'card'+(s.term[i]===1?' k':s.term[i]===0?' r':'');
+  const front=(k,x,i)=>{k.className=cls(i);k.dataset.open='0';k.innerHTML=`<div class="tt">${f(x[0])}</div>`;};
+  const back=(k,x,i)=>{k.className=cls(i)+' flip';k.dataset.open='1';
+    k.innerHTML=`<div class="tn">${f(x[0])}</div><div class="td">${f(x[1])}</div><div class="mk"><button class="y">✔ Bilaman</button><button class="n">↻ Takrorlayman</button></div>`;
+    k.querySelector('.y').onclick=e=>{e.stopPropagation();s.term[i]=1;save();front(k,x,i);cnt();};
+    k.querySelector('.n').onclick=e=>{e.stopPropagation();s.term[i]=0;save();front(k,x,i);cnt();};};
   const draw=q=>{
     const g=c.glossary.map((x,i)=>[x,i]).filter(([x])=>(x[0]+' '+x[1]).toLowerCase().includes(q.toLowerCase()));
-    const fc=document.getElementById('fc');
-    fc.innerHTML=g.map(([x,i])=>`<div class="card ${s.term[i]===1?'k':s.term[i]===0?'r':''}" data-i="${i}"><div class="t">${f(x[0])}</div><div class="d" hidden>${f(x[1])}<div class="mk"><button class="y">✔ Bilaman</button><button class="n">↻ Takrorlayman</button></div></div></div>`).join('')||'<p>Topilmadi.</p>';
-    fc.querySelectorAll('.card').forEach(k=>{
-      k.onclick=()=>{const t=k.querySelector('.t'),d=k.querySelector('.d');const sh=d.hidden;d.hidden=!sh;t.hidden=sh;k.classList.toggle('flip',sh)};
-      const i=k.dataset.i;
-      k.querySelector('.y').onclick=e=>{e.stopPropagation();s.term[i]=1;save();k.className='card k';k.querySelector('.d').hidden=true;k.querySelector('.t').hidden=false;cnt();};
-      k.querySelector('.n').onclick=e=>{e.stopPropagation();s.term[i]=0;save();k.className='card r';k.querySelector('.d').hidden=true;k.querySelector('.t').hidden=false;cnt();};
-    });
+    const fc=document.getElementById('fc');fc.innerHTML='';
+    if(!g.length){fc.innerHTML='<p>Topilmadi.</p>';return;}
+    g.forEach(([x,i])=>{const k=document.createElement('div');front(k,x,i);
+      k.onclick=()=>{k.dataset.open==='1'?front(k,x,i):back(k,x,i)};fc.appendChild(k);});
   };
   draw('');cnt();document.getElementById('s').oninput=e=>draw(e.target.value);
 }
